@@ -1,6 +1,5 @@
 import os
 import cv2
-from common.yolo.simple_structs import Yolo, YoloPose
 from common.utils.load_schema import KeyPoint, Skeleton
 
 # 定义关键点和骨骼映射
@@ -71,7 +70,18 @@ def load_external_schema(schema_file: str):
     kpt_color_map, skeleton_map, bbox_colors = load_schema_from_json(schema_file)
 
 
-def draw_skeletons(image, results, different_bbox=False, show_pts=True, show_names=True):
+def draw_skeletons(image, results: list, different_bbox=False, show_pts=True, show_names=True):
+    """
+    Draw skeletons on the image.
+
+    :param image: cv2 image
+    :param results: list of YoloPose objects
+    :param different_bbox: True if different bounding box colors are used
+    :param show_pts: True if key points are shown
+    :param show_names: True if key point names are shown
+    :return:
+    """
+
     for idx, pose in enumerate(results):
         # Draw the key points
         if show_pts:
@@ -120,7 +130,16 @@ def draw_skeletons(image, results, different_bbox=False, show_pts=True, show_nam
     return image
 
 
-def draw_boxes_with_labels(image, results, labels: list):
+def draw_boxes_with_labels(image, results: list, labels: list):
+    """
+    Draw bounding boxes with labels on the image.
+
+    :param image: cv2 image
+    :param results: list of Yolo objects
+    :param labels: list of strings
+    :return:
+    """
+
     for yolo in results:
         lx, ly, rx, ry, cls, conf = yolo.lx, yolo.ly, yolo.rx, yolo.ry, yolo.cls, yolo.conf
 
@@ -143,3 +162,34 @@ def draw_boxes_with_labels(image, results, labels: list):
         cv2.putText(image, label, (lx, ly - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
     return image
+
+
+def draw_facial_vectors_2D(frame, orientation_vectors: list, different_vectors=False, show_legend=False):
+    """
+    Draw facial orientation vectors on the image.
+
+    :param frame: cv2 image
+    :param orientation_vectors: list of FacialOrientation2D objects
+    :param different_vectors: True if different vectors are used
+    """
+
+    for idx, vector in enumerate(orientation_vectors):
+        # Determine the color of the vector
+        if different_vectors:
+            vector_color = bbox_colors[idx % len(bbox_colors)]
+        else:
+            vector_color = (255, 0, 0)
+
+        # Draw the orientation vector
+        cv2.arrowedLine(frame, (vector.origin_x, vector.origin_y), (vector.dest_x, vector.dest_y),
+                        vector_color, 2)
+        
+        # Draw the legend
+        if show_legend:
+            face_direction = str(vector)
+
+            # Put the legend text on the image
+            cv2.putText(frame, face_direction, (vector.lx + 5, vector.ly + 15),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, vector_color, 1)
+
+    return frame

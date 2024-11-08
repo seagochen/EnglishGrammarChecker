@@ -1,7 +1,14 @@
 from common.yolo.simple_structs import Yolo, YoloPose, YoloPoint
 
 
-def process_yolo(results) -> list:
+def process_yolo(results: list) -> list:
+    """
+    Process the results from the YOLO model.
+
+    :param results: list of results from the YOLO model
+    :return:
+    """
+
     # A list to store the results
     yolo_objects = []
 
@@ -26,7 +33,14 @@ def process_yolo(results) -> list:
     return yolo_objects
 
 
-def process_pose(results) -> list:
+def process_pose(results: list) -> list:
+    """
+    Process the pose results from the YOLO model.
+
+    :param results: list of results from the YOLO-Pose model
+    :return:
+    """
+
     # A list to store the results
     yolo_objects = []
 
