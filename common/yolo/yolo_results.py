@@ -114,19 +114,15 @@ class YoloPoint:
 
 
 @dataclass
-class YoloPose:
-    lx: int
-    ly: int
-    rx: int
-    ry: int
-    conf: float
+class YoloPose(Yolo):
     pts: List[YoloPoint] = field(default_factory=list)
 
-    def __init__(self, lx: int = 0, ly: int = 0, rx: int = 0, ry: int = 0, conf: float = 0.0, pts: List[YoloPoint] = None):
+    def __init__(self, lx: int = 0, ly: int = 0, rx: int = 0, ry: int = 0, cls: int = 0, conf: float = 0.0, pts: List[YoloPoint] = None):
         self.lx = lx
         self.ly = ly
         self.rx = rx
         self.ry = ry
+        self.cls = cls
         self.conf = conf
 
         # Ensure self.pts is always initialized
@@ -134,7 +130,7 @@ class YoloPose:
 
     def to_list(self):
         """Converts the YoloPose object to a list."""
-        return [self.lx, self.ly, self.rx, self.ry, self.conf, [pt.to_list() for pt in self.pts]]
+        return [self.lx, self.ly, self.rx, self.ry, self.cls, self.conf, [pt.to_list() for pt in self.pts]]
 
     def from_list(self, data: List):
         """Creates a YoloPose object from a list."""
@@ -142,10 +138,11 @@ class YoloPose:
         self.ly = data[1]
         self.rx = data[2]
         self.ry = data[3]
-        self.conf = data[4]
+        self.cls = data[4]
+        self.conf = data[5]
 
         # Create a list to store the keypoints
-        self.pts = [YoloPoint(*pt) for pt in data[5]]
+        self.pts = [YoloPoint(*pt) for pt in data[6]]
 
     def to_dict(self):
         """Converts the YoloPose object to a dictionary."""
@@ -154,6 +151,7 @@ class YoloPose:
             "ly": self.ly,
             "rx": self.rx,
             "ry": self.ry,
+            "cls": self.cls,
             "conf": self.conf,
             "pts": [pt.to_dict() for pt in self.pts]
         }
@@ -164,6 +162,7 @@ class YoloPose:
         self.ly = data["ly"]
         self.rx = data["rx"]
         self.ry = data["ry"]
+        self.cls = data["cls"]
         self.conf = data["conf"]
 
         # Create a list to store the keypoints

@@ -2,6 +2,7 @@ import os
 import cv2
 from common.utils.load_schema import KeyPoint, Skeleton
 
+
 # 定义关键点和骨骼映射
 kpt_color_map = {
     0: KeyPoint("Nose", (0, 0, 255)),
@@ -70,7 +71,7 @@ def load_external_schema(schema_file: str):
     kpt_color_map, skeleton_map, bbox_colors = load_schema_from_json(schema_file)
 
 
-def draw_skeletons(image, results: list, different_bbox=False, show_pts=True, show_names=True):
+def draw_skeletons_with_bboxes(image, results: list, different_bbox=False, show_pts=True, show_names=True):
     """
     Draw skeletons on the image.
 
@@ -130,7 +131,44 @@ def draw_skeletons(image, results: list, different_bbox=False, show_pts=True, sh
     return image
 
 
-def draw_boxes_with_labels(image, results: list, labels: list):
+def draw_skeletons_without_bboxes(image, results: list, show_pts=True, show_names=True):
+    """
+    Draw skeletons on the image without bounding boxes.
+
+    :param image: cv2 image
+    :param results: list of YoloPose objects
+    :param show_pts: True if key points are shown
+    :param show_names: True if key point names are shown
+    :return:
+    """
+
+    for pose in results:
+        # Draw the key points
+        if show_pts:
+            for i, pt in enumerate(pose.pts):
+                if pt.conf > 0.2 and i in kpt_color_map:
+                    kp = kpt_color_map[i]
+                    cv2.circle(image, (pt.x, pt.y), 3, kp.color, -1)
+
+                    if show_names:
+                        cv2.putText(image, kp.name, (pt.x, pt.y - 5), cv2.FONT_HERSHEY_SIMPLEX,
+                                    0.5, kp.color, 1)
+
+        # Draw the skeleton
+        for bone in skeleton_map:
+            # Easy debug
+            srt_kp = pose.pts[bone.srt_kpt_id]
+            dst_kp = pose.pts[bone.dst_kpt_id]
+
+            if srt_kp.conf > 0.2 and dst_kp.conf > 0.2 and \
+                srt_kp.x > 0 and srt_kp.y > 0 and \
+                    dst_kp.x > 0 and dst_kp.y > 0:
+                cv2.line(image, (srt_kp.x, srt_kp.y), (dst_kp.x, dst_kp.y), bone.color, 2)
+
+    return image
+
+
+def draw_bboxes_with_labels(image, results: list, labels: list):
     """
     Draw bounding boxes with labels on the image.
 
@@ -164,7 +202,28 @@ def draw_boxes_with_labels(image, results: list, labels: list):
     return image
 
 
-def draw_facial_vectors_2D(frame, orientation_vectors: list, different_vectors=False, show_legend=False):
+def draw_bboxes_without_labels(image, results: list):
+    """
+    Draw bounding boxes without labels on the image.
+
+    :param image: cv2 image
+    :param results: list of Yolo objects
+    :return:
+    """
+
+    for yolo in results:
+        lx, ly, rx, ry, cls, conf = yolo.lx, yolo.ly, yolo.rx, yolo.ry, yolo.cls, yolo.conf
+
+        # Select color based on class
+        box_color = bbox_colors[cls % len(bbox_colors)]
+
+        # Draw the bounding box
+        cv2.rectangle(image, (lx, ly), (rx, ry), box_color, 2)
+
+    return image
+
+
+def draw_facial_vectors_2d(frame, orientation_vectors: list, different_vectors=False, show_legend=False):
     """
     Draw facial orientation vectors on the image.
 

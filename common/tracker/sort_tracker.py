@@ -16,7 +16,7 @@ class SortTracker:
     def update(self, detections):
         self.frame_count += 1  # 增加帧计数器
         trks = np.zeros((len(self.trackers), 5))  # 用来存储当前所有追踪器的状态信息
-        to_del = []  # 存储需要删除的追踪器索引
+        # to_del = []  # 存储需要删除的追踪器索引
         for t, trk in enumerate(self.trackers):
             pos = trk.predict()  # 预测当前帧中的位置
             trks[t][:4] = trk.get_state()  # 获取追踪器的状态（bounding box）
