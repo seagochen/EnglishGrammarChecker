@@ -1,4 +1,4 @@
-from common.yolo.simple_structs import YoloPose
+from common.yolo.yolo_results import YoloPose
 
 
 class FacialOrientation2D:
