@@ -4,19 +4,33 @@ from scipy.optimize import linear_sum_assignment
 
 
 class SortTracker:
-    def __init__(self, max_age=5, min_hits=1, iou_threshold=0.3):
+    def __init__(self, max_age=5, min_hits=1, iou_threshold=0.3, max_objects=1000):
         # 初始化追踪器的参数
         self.max_age = max_age  # 最大允许的未更新帧数
         self.min_hits = min_hits  # 需要的最小匹配次数来确认一个追踪器
         self.iou_threshold = iou_threshold  # 匹配时使用的 IOU 阈值
         self.trackers = []  # 存储所有活动的追踪器
         self.frame_count = 0  # 帧计数器
-        self.next_id = 0  # 下一个目标的 ID
+        self.available_ids = set()  # 可用ID的池子，用于重用ID
+
+        # 初始化可用ID池子
+        for i in range(max_objects):
+            self.available_ids.add(i)
+
+    def _get_next_id(self):
+        """获取下一个可用的ID"""
+        if self.available_ids:
+            return self.available_ids.pop()
+        else:
+            raise Exception("No available ID left!")
+
+    def _release_id(self, trk_id):
+        """将ID放入可用池子"""
+        self.available_ids.add(trk_id)
 
     def update(self, detections):
         self.frame_count += 1  # 增加帧计数器
         trks = np.zeros((len(self.trackers), 5))  # 用来存储当前所有追踪器的状态信息
-        # to_del = []  # 存储需要删除的追踪器索引
         for t, trk in enumerate(self.trackers):
             pos = trk.predict()  # 预测当前帧中的位置
             trks[t][:4] = trk.get_state()  # 获取追踪器的状态（bounding box）
@@ -24,6 +38,7 @@ class SortTracker:
 
             # 检查预测的位置是否为 NaN 并删除相应的追踪器
             if np.any(np.isnan(pos)):
+                self._release_id(trk.id)  # 释放ID
                 self.trackers.pop(t)
 
             # 去除含有 NaN 的行
@@ -39,12 +54,13 @@ class SortTracker:
 
         for i in unmatched_dets:
             # 对于未匹配上的检测结果，创建新的 Kalman 追踪器
-            trk = KalmanFilter(self.next_id, detections[i][:4])
-            self.next_id += 1
+            trk = KalmanFilter(self._get_next_id(), detections[i][:4])  # 获取新的ID
             self.trackers.append(trk)  # 添加到追踪器列表中
             detection_map[trk.id] = i  # 记录新追踪器的信息
 
         ret = []  # 存储更新后的追踪器结果
+        # 创建临时列表来保存活动的跟踪器
+        active_trackers = []
         for trk in self.trackers:
             if trk.time_since_update <= self.max_age:  # 检查追踪器是否在有效时间范围内
                 bbox = trk.get_state()  # 获取追踪器的状态
@@ -52,9 +68,13 @@ class SortTracker:
                 if detection_idx is not None and detection_idx < len(detections):
                     kpts_combined = detections[detection_idx][4:]  # 获取检测的关键点信息
                     ret.append([trk.id] + bbox + kpts_combined.tolist())  # 保存追踪器 ID、bounding box 和关键点信息
+                active_trackers.append(trk)  # 将活跃的追踪器添加到新列表中
+            else:
+                # 如果超出 max_age，释放其 ID
+                self._release_id(trk.id)
 
-        # 移除超出 max_age 的追踪器
-        self.trackers = [trk for trk in self.trackers if trk.time_since_update <= self.max_age]
+        # 更新追踪器列表，仅保留活跃的追踪器
+        self.trackers = active_trackers
 
         return np.array(ret)  # 返回更新后的追踪结果
 
