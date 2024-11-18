@@ -21,14 +21,14 @@ def calculate_angle(p1, p2, p3):
     angle_rad = math.acos((a ** 2 + b ** 2 - c ** 2) / (2 * a * b))
     return math.degrees(angle_rad)
 
-def determine_pose(yolo_pose: YoloPose) -> str:
+
+def determine_body_angle(yolo_pose: YoloPose) -> float:
     """
-    使用关节点的相对角度来推断人体姿势类型：站立、蹲下、或弯腰。
-    
+    肩ー腰ー膝の関節「かんせつ」形成される接続線を使用して人体の角度を推定します。
+
     :param yolo_pose: YoloPose 对象，包含人体关键点的信息。
     :return: 返回姿势类型 "Standing", "Squatting" 或 "Bending"
     """
-
     # 提取关键点坐标
     shoulder_left = yolo_pose.pts[5]
     shoulder_right = yolo_pose.pts[6]
@@ -56,15 +56,20 @@ def determine_pose(yolo_pose: YoloPose) -> str:
 
     # 计算肩膀-髋部-膝盖之间的角度
     angle = calculate_angle(shoulder_avg, hip_avg, knee_avg)
+    return angle
 
-    # print(f"Angle: {angle}")
 
-    # 根据角度判断姿势
-    if angle > 160:  # 接近180°角时，通常表示站立
+def determine_body_pose(yolo_pose: YoloPose, alpha=70.0, beta=140.0) -> str:
+
+    # 体の角度を測る「はかる」
+    angle = determine_body_angle(yolo_pose)
+
+    # 閾値「しきいち」を使用して、姿勢を決定「けってい」します。
+    if angle > beta:  # 接近180°角时，通常表示站立
         return PoseType.Standing
-    elif 70 < angle <= 160:  # 角度在60到160之间表示弯腰
+    elif alpha < angle <= beta:  # 角度在60到160之间表示弯腰
         return PoseType.Bending
-    elif angle <= 70:  # 角度小于60度通常表示蹲下
+    elif angle <= alpha:  # 角度小于60度通常表示蹲下
         return PoseType.Squatting
     else:
         return PoseType.Unknown  # 未知姿势
