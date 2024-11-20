@@ -126,3 +126,31 @@ def detect_facial_vectors(results: List[YoloPose]) -> List[FacialOrientation2D]:
         facial_vector.check_orientation(pose)
         facial_vectors.append(facial_vector)
     return facial_vectors
+
+
+def detect_facial_orientations(results: List[YoloPose], return_type="str") -> List:
+
+    # 顔の向きvectorを検出する
+    facial_vectors = detect_facial_vectors(results)
+
+    facial_orientations = []
+    for vector in facial_vectors:
+   
+        # 顔の向きを文字列で返す
+        if return_type == "str":
+            orientation = vector.orientation
+
+            if orientation == 1:
+                facial_orientations.append("Face left")
+            elif orientation == 2:
+                facial_orientations.append("Face right")
+            elif orientation == 3:
+                facial_orientations.append("Face front")
+            else:
+                facial_orientations.append("Unknown")
+
+        # 顔の向きを数値で返す
+        else:
+            facial_orientations.append(vector.orientation)
+
+    return facial_orientations
