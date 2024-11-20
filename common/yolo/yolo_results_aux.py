@@ -1,9 +1,10 @@
 from common.yolo.yolo_results import Yolo, YoloPose, YoloPoint
 import numpy as np
+from typing import List
 
 
 ###### Convert yolo.results to a list of Yolo/YoloPose objects ######
-def results_to_yolo_list(results) -> list[Yolo]:
+def results_to_yolo_list(results) -> List[Yolo]:
     # A list to store the results
     yolo_objects = []
 
@@ -36,7 +37,7 @@ def results_to_yolo_list(results) -> list[Yolo]:
     return yolo_objects
 
 
-def results_to_pose_list(results) -> list[YoloPose]:
+def results_to_pose_list(results) -> List[YoloPose]:
     # A list to store the results
     yolo_objects = []
 
@@ -99,7 +100,7 @@ def yolo_point_list_to_numpy(data: list[YoloPoint]) -> np.ndarray:
     
     return np.array(numpy_list)
 
-def numpy_to_yolo_point_list(data: np.ndarray) -> list[YoloPoint]:
+def numpy_to_yolo_point_list(data: np.ndarray) -> List[YoloPoint]:
     """
     Converts a numpy array to a list of YoloPoint objects.
 
@@ -146,7 +147,7 @@ def pose_list_to_numpy(data: list[YoloPose]) -> np.ndarray:
 
 
 ###### Convert a numpy array to a list of Yolo/YoloPose objects ######
-# def numpy_to_yolo_list(data: np.ndarray) -> list[Yolo]:
+# def numpy_to_yolo_list(data: np.ndarray) -> List[Yolo]:
 #     """
 #     Converts a numpy array to a list of Yolo objects.
 #     """
@@ -157,7 +158,7 @@ def pose_list_to_numpy(data: list[YoloPose]) -> np.ndarray:
 #         yolo_list.append(yolo)
 #     return yolo_list
 
-def numpy_to_yolo_list(data: np.ndarray) -> list[Yolo]:
+def numpy_to_yolo_list(data: np.ndarray) -> List[Yolo]:
     """
     Converts a numpy array to a list of Yolo objects with the updated attribute order.
     Each row in `data` should contain the main attributes in the order: [x1, y1, x2, y2, conf, cls].
@@ -171,7 +172,7 @@ def numpy_to_yolo_list(data: np.ndarray) -> list[Yolo]:
     return yolo_list
 
 
-def numpy_to_pose_list(data: np.ndarray) -> list[YoloPose]:
+def numpy_to_pose_list(data: np.ndarray) -> List[YoloPose]:
     """
     Converts a fully flattened numpy array back to a list of YoloPose objects.
     Each row in `data` should contain the main attributes followed by the flattened

@@ -68,6 +68,7 @@ class SortTracker:
                 if detection_idx is not None and detection_idx < len(detections):
                     kpts_combined = detections[detection_idx][4:]  # 获取检测的关键点信息
                     ret.append([trk.id] + bbox + kpts_combined.tolist())  # 保存追踪器 ID、bounding box 和关键点信息
+
                 active_trackers.append(trk)  # 将活跃的追踪器添加到新列表中
             else:
                 # 如果超出 max_age，释放其 ID
