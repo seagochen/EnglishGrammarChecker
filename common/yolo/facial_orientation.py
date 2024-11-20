@@ -1,7 +1,9 @@
 from common.yolo.yolo_results import YoloPose
+from typing import List
 
 
 class FacialOrientation2D:
+    
     def __init__(self, length=100):
         """
         Initialize the FacialOrientation2D class with default values.
@@ -111,7 +113,7 @@ class FacialOrientation2D:
         return orientation_texts.get(self.orientation, "Unknown")
 
 
-def detect_facial_vectors(results: list[YoloPose]) -> list[FacialOrientation2D]:
+def detect_facial_vectors(results: List[YoloPose]) -> List[FacialOrientation2D]:
     """
     Process a list of YoloPose objects to determine facial orientation vectors.
 
