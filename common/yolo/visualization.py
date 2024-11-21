@@ -224,6 +224,33 @@ def draw_bboxes_without_labels(image, results: list):
     return image
 
 
+
+def draw_bboxes_with_names(image, results: list, bbox_names: list):
+    for yolo, name in zip(results, bbox_names):
+        lx, ly, rx, ry, cls, conf = yolo.lx, yolo.ly, yolo.rx, yolo.ry, yolo.cls, yolo.conf
+
+        # Select color based on class
+        box_color = bbox_colors[cls % len(bbox_colors)]
+
+        # Draw the bounding box
+        cv2.rectangle(image, (lx, ly), (rx, ry), box_color, 2)
+
+        # Create the label text with confidence
+        label = "{}: {:.2f}".format(name, conf)
+
+        # Get text size for background size
+        text_size, baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+
+        # Draw a filled rectangle as background for text
+        cv2.rectangle(image, (lx, ly - text_size[1] - 5), (lx + text_size[0], ly), box_color, cv2.FILLED)
+
+        # Put the label text on the image
+        cv2.putText(image, label, (lx, ly - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+
+    return image
+
+
+
 def draw_facial_vectors_2d(frame, orientation_vectors: list, different_vectors=False, show_legend=False):
     """
     Draw facial orientation vectors on the image.
@@ -255,7 +282,7 @@ def draw_facial_vectors_2d(frame, orientation_vectors: list, different_vectors=F
     return frame
 
 
-def draw_sort_bboxes(image, np_data: np.array, labels: list = None):
+def draw_sort_bboxes(image, np_data: np.ndarray, labels: list = None):
     """
     Draw bounding boxes with labels on the image.
 
@@ -277,7 +304,7 @@ def draw_sort_bboxes(image, np_data: np.array, labels: list = None):
         if labels is not None:
             label = f"{labels[int(np_data[i, 6])]}: {np_data[i, 5]:.2f}"
         else:
-            label = f"ID: {int(np_data[i, 0])}: {np_data[i, 5]:.2f}"
+            label = f"ID {int(np_data[i, 0])}: {np_data[i, 5]:.2f}"
 
         # Draw the bounding box
         cv2.rectangle(image, (lx, ly), (rx, ry), box_color, 2)

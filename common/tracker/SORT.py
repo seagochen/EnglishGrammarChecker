@@ -1,14 +1,12 @@
-from typing import List
-
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
 from common.tracker.tracker_manager import TrackerManager
-from common.yolo.yolo_results import Yolo
 
 
 
 class SortTracker:
+    
     def __init__(self, max_age=5, min_hits=1, iou_threshold=0.3, max_objects=1000):
         self.max_age = max_age
         self.min_hits = min_hits
@@ -16,23 +14,37 @@ class SortTracker:
         self.frame_count = 0  # 帧计数器
         self.tracker_manager = TrackerManager(max_age, max_objects)  # 用 TrackerManager 管理追踪器
 
-    def update(self, detections: List[Yolo]):
+    def update(self, detections: np.ndarray) -> np.array:
         self.frame_count += 1
         trks = self.tracker_manager.get_tracker_states()  # 获取当前所有追踪器的状态
 
         # 将检测结果与追踪器进行匹配
         matched, unmatched_dets, unmatched_trks = self._associate_detections_to_trackers(detections, trks)
+        # 对于matched的结构来说：每一行是一个匹配对，包含两个值：
+        # 第一列：检测结果的索引（在输入 detections 中的位置）。
+        # 第二列：追踪器的索引（在 trackers 数组中的位置）。
+        # 例:
+        #     [0, 0],  # 第 0 个检测结果匹配第 0 个追踪器
+        #     [1, 1]   # 第 1 个检测结果匹配第 1 个追踪器
 
-        detection_map = {}  # 追踪器 ID 与检测结果索引的映射
-        for m in matched:
+
+        # 追踪器 ID 与检测结果索引的映射
+        detection_map = {}  
+
+        for m in matched: # 更新匹配上的追踪器
             self.tracker_manager.trackers[m[1]].update(detections[m[0]][:4])  # 更新匹配上的追踪器
             detection_map[self.tracker_manager.trackers[m[1]].id] = m[0]
 
-        for i in unmatched_dets:
+        for i in unmatched_dets: # 为未匹配的检测结果创建新的追踪器
             tracker = self.tracker_manager.add_tracker(detections[i][:4])  # 添加新的追踪器
             detection_map[tracker.id] = i
 
-        self.tracker_manager.update_trackers()  # 更新追踪器状态
+        # 未更新的追踪器不需要处理，因为超过一定帧数未更新的追踪器会被TrackerManager删除
+        # for id in unmatched_trks:
+        #     self.tracker_manager.trackers[id]._release_id(self.tracker_manager.trackers[id].id)
+
+        # 更新追踪器状态
+        self.tracker_manager.update_trackers() 
 
         # 构造返回的结果
         ret = []
