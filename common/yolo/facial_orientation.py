@@ -29,7 +29,7 @@ class FacialOrientation2D:
         # Vector length
         self.length = length
 
-        # Face orientation state: -1 (unknown), 0 (front), 1 (left), 2 (right)
+        # Face orientation state: -1 (unknown), 0 (front), 1 (left), 2 (right) and 3 (back)
         self.orientation = -1
 
     def check_orientation(self, pose: YoloPose):
@@ -76,7 +76,7 @@ class FacialOrientation2D:
 
             # Back orientation
             if self._is_valid_pt(right_ear_pt) or self._is_valid_pt(left_ear_pt):
-                self.orientation = 4 
+                self.orientation = 3
 
             # Unrecognized orientation
             else:
@@ -135,7 +135,7 @@ class FacialOrientation2D:
 
     def __str__(self):
         """String representation based on face orientation."""
-        orientation_texts = { 0: "Face front", 1: "Face left", 2: "Face right", -1: "Unknown"}
+        orientation_texts = { 0: "Face front", 1: "Face left", 2: "Face right", 3: "Back", -1: "Unknown"}
         return orientation_texts.get(self.orientation, "Unknown")
 
 
@@ -172,6 +172,8 @@ def detect_facial_orientations(results: List[YoloPose], return_type="str") -> Li
                 facial_orientations.append("Face left")
             elif orientation == 2:
                 facial_orientations.append("Face right")
+            elif orientation == 3:
+                facial_orientations.append("Face back")
             else:
                 facial_orientations.append("Unknown")
 
