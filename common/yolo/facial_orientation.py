@@ -29,8 +29,8 @@ class FacialOrientation2D:
         # Vector length
         self.length = length
 
-        # Face orientation state: 0 (unknown), 1 (left), 2 (right), 3 (front)
-        self.orientation = 0
+        # Face orientation state: -1 (unknown), 0 (front), 1 (left), 2 (right)
+        self.orientation = -1
 
     def check_orientation(self, pose: YoloPose):
         """
@@ -51,24 +51,50 @@ class FacialOrientation2D:
         ear_tmp_x, ear_tmp_y = 0, 0
 
         # Front, right, and left face orientations
-        if self._is_valid_point(nose_pt):
-            if self._is_valid_point(right_ear_pt) and self._is_valid_point(left_ear_pt):
-                self.orientation = 3  # Front face
-            elif self._is_valid_point(right_ear_pt) and not self._is_valid_point(left_ear_pt):
-                self.orientation = 2  # Right side face
-                ear_tmp_x, ear_tmp_y = right_ear_pt.x, right_ear_pt.y
-            elif self._is_valid_point(left_ear_pt) and not self._is_valid_point(right_ear_pt):
-                self.orientation = 1  # Left side face
-                ear_tmp_x, ear_tmp_y = left_ear_pt.x, left_ear_pt.y
-            else:
-                self.orientation = 0  # Unrecognized
-        else:
-            self.orientation = 0  # Unrecognized due to invalid nose
+        if self._is_valid_pt(nose_pt):
 
+            # Front face orientation
+            if self._is_valid_pt(right_ear_pt) and self._is_valid_pt(left_ear_pt):
+                self.orientation = 0 
+
+            # Right orientation
+            elif self._is_valid_pt(right_ear_pt) and not self._is_valid_pt(left_ear_pt):
+                self.orientation = 2 
+                ear_tmp_x, ear_tmp_y = right_ear_pt.x, right_ear_pt.y
+            
+            # Left orientation
+            elif self._is_valid_pt(left_ear_pt) and not self._is_valid_pt(right_ear_pt):
+                self.orientation = 1 
+                ear_tmp_x, ear_tmp_y = left_ear_pt.x, left_ear_pt.y
+            
+            # Unrecognized orientation
+            else:
+                self.orientation = -1  # Unrecognized
+
+        # Back orientation
+        elif not self._is_valid_pt(nose_pt):
+
+            # Back orientation
+            if self._is_valid_pt(right_ear_pt) or self._is_valid_pt(left_ear_pt):
+                self.orientation = 4 
+
+            # Unrecognized orientation
+            else:
+                self.orientation = -1
+        
+        # Unrecognized orientation
+        else:
+            self.orientation = -1 
+
+        # Calculate the face orientation vector based on the keypoints
         if self.orientation in [1, 2]:
             self._calculate_vector(nose_pt, ear_tmp_x, ear_tmp_y)
+
+        # Do not calculate vector for front-facing orientation
         elif self.orientation == 3:
             self._set_front_face(nose_pt)
+
+        # Unrecognized orientation
         else:
             self._set_unrecognized(pose)
 
@@ -97,7 +123,7 @@ class FacialOrientation2D:
         self.dest_x = self.dest_y = 0
 
     @staticmethod
-    def _is_valid_point(pt):
+    def _is_valid_pt(pt):
         """Check if a keypoint is valid based on confidence and coordinates."""
         return pt.conf > 0.2 and pt.x > 0 and pt.y > 0
 
@@ -109,7 +135,7 @@ class FacialOrientation2D:
 
     def __str__(self):
         """String representation based on face orientation."""
-        orientation_texts = {1: "Face left", 2: "Face right", 3: "Face front"}
+        orientation_texts = { 0: "Face front", 1: "Face left", 2: "Face right", -1: "Unknown"}
         return orientation_texts.get(self.orientation, "Unknown")
 
 
@@ -126,3 +152,31 @@ def detect_facial_vectors(results: List[YoloPose]) -> List[FacialOrientation2D]:
         facial_vector.check_orientation(pose)
         facial_vectors.append(facial_vector)
     return facial_vectors
+
+
+def detect_facial_orientations(results: List[YoloPose], return_type="str") -> List:
+
+    # 顔の向きvectorを検出する
+    facial_vectors = detect_facial_vectors(results)
+
+    facial_orientations = []
+    for vector in facial_vectors:
+   
+        # 顔の向きを文字列で返す
+        if return_type == "str":
+            orientation = vector.orientation
+
+            if orientation == 0:
+                facial_orientations.append("Face front")
+            if orientation == 1:
+                facial_orientations.append("Face left")
+            elif orientation == 2:
+                facial_orientations.append("Face right")
+            else:
+                facial_orientations.append("Unknown")
+
+        # 顔の向きを数値で返す
+        else:
+            facial_orientations.append(vector.orientation)
+
+    return facial_orientations

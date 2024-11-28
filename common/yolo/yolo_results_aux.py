@@ -1,6 +1,6 @@
 from common.yolo.yolo_results import Yolo, YoloPose, YoloPoint
 import numpy as np
-from typing import List
+from typing import List, Tuple
 
 
 ###### Convert yolo.results to a list of Yolo/YoloPose objects ######
@@ -192,3 +192,32 @@ def numpy_to_pose_list(data: np.ndarray) -> List[YoloPose]:
         pose_list.append(yolo_pose)
     
     return pose_list
+
+
+###### Sort the results and tracker IDs to separate lists ######
+
+
+def sort_results_to_pose_list(sorted_data: np.ndarray) -> Tuple[List[YoloPose], List[int]]:
+    # The first column contains the tracker ID
+    tracker_ids = sorted_data[:, 0].astype(int).tolist()
+
+    # The rest of the columns contain the pose data
+    pose_data = sorted_data[:, 1:]
+
+    # Convert the pose data to a list of YoloPose objects
+    pose_list = numpy_to_pose_list(pose_data)
+
+    return pose_list, tracker_ids
+
+
+def sort_results_to_yolo_list(sorted_data: np.ndarray) -> Tuple[List[Yolo], List[int]]:
+    # The first column contains the tracker ID
+    tracker_ids = sorted_data[:, 0].astype(int).tolist()
+
+    # The rest of the columns contain the yolo data
+    yolo_data = sorted_data[:, 1:]
+
+    # Convert the yolo data to a list of Yolo objects
+    yolo_list = numpy_to_yolo_list(yolo_data)
+
+    return yolo_list, tracker_ids

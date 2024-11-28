@@ -83,7 +83,7 @@ class SimpleBodyPosture:
             return PoseType.Unknown  # 未知姿势
         
 
-def detect_body_postures(results: List[YoloPose], return_type="int") -> List:
+def detect_body_postures(results: List[YoloPose], return_type="str") -> List:
     """
     从 YOLO 检测结果中提取人体姿势信息。
     """
