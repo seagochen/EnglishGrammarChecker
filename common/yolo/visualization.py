@@ -225,18 +225,44 @@ def draw_bboxes_without_labels(image, results: list):
 
 
 
-def draw_bboxes_with_names(image, results: list, bbox_names: list):
-    for yolo, name in zip(results, bbox_names):
+# def draw_bboxes_with_names(image, results: list, bbox_names: list):
+#     for yolo, name in zip(results, bbox_names):
+#         lx, ly, rx, ry, cls, conf = yolo.lx, yolo.ly, yolo.rx, yolo.ry, yolo.cls, yolo.conf
+
+#         # Select color based on class
+#         box_color = bbox_colors[cls % len(bbox_colors)]
+
+#         # Draw the bounding box
+#         cv2.rectangle(image, (lx, ly), (rx, ry), box_color, 2)
+
+#         # Create the label text with confidence
+#         label = "{}: {:.2f}".format(name, conf)
+
+#         # Get text size for background size
+#         text_size, baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+
+#         # Draw a filled rectangle as background for text
+#         cv2.rectangle(image, (lx, ly - text_size[1] - 5), (lx + text_size[0], ly), box_color, cv2.FILLED)
+
+#         # Put the label text on the image
+#         cv2.putText(image, label, (lx, ly - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+
+#     return image
+
+
+
+def draw_bboxes_with_indices(image, results: list, indices: list):
+    for yolo, index in zip(results, indices):
         lx, ly, rx, ry, cls, conf = yolo.lx, yolo.ly, yolo.rx, yolo.ry, yolo.cls, yolo.conf
 
         # Select color based on class
-        box_color = bbox_colors[cls % len(bbox_colors)]
+        box_color = bbox_colors[index % len(bbox_colors)]
 
         # Draw the bounding box
         cv2.rectangle(image, (lx, ly), (rx, ry), box_color, 2)
 
         # Create the label text with confidence
-        label = "{}: {:.2f}".format(name, conf)
+        label = "{}: {:.2f}".format(index, conf)
 
         # Get text size for background size
         text_size, baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
@@ -248,6 +274,7 @@ def draw_bboxes_with_names(image, results: list, bbox_names: list):
         cv2.putText(image, label, (lx, ly - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
     return image
+
 
 
 
@@ -282,41 +309,42 @@ def draw_facial_vectors_2d(frame, orientation_vectors: list, different_vectors=F
     return frame
 
 
-def draw_sort_bboxes(image, np_data: np.ndarray, labels: list = None):
-    """
-    Draw bounding boxes with labels on the image.
 
-    :param image: cv2 image
-    :param np_data: Numpy array [id, lx, ly, rx, ry, conf, cls, ...], size [N, 58] or [N, 7]
-    :param labels: list of strings
-    :return:
-    """
+# def draw_sort_bboxes(image, np_data: np.ndarray, labels: list = None):
+#     """
+#     Draw bounding boxes with labels on the image.
 
-    # Iterate over each bounding box in np_data
-    for i in range(np_data.shape[0]):
-        # Get bounding box coordinates and convert them to integers
-        lx, ly, rx, ry = map(int, np_data[i, 1:5])
+#     :param image: cv2 image
+#     :param np_data: Numpy array [id, lx, ly, rx, ry, conf, cls, ...], size [N, 58] or [N, 7]
+#     :param labels: list of strings
+#     :return:
+#     """
 
-        # Get the color for this bounding box based on its id
-        box_color = bbox_colors[int(np_data[i, 0]) % len(bbox_colors)]
+#     # Iterate over each bounding box in np_data
+#     for i in range(np_data.shape[0]):
+#         # Get bounding box coordinates and convert them to integers
+#         lx, ly, rx, ry = map(int, np_data[i, 1:5])
 
-        # Determine the label text
-        if labels is not None:
-            label = f"{labels[int(np_data[i, 6])]}: {np_data[i, 5]:.2f}"
-        else:
-            label = f"ID {int(np_data[i, 0])}: {np_data[i, 5]:.2f}"
+#         # Get the color for this bounding box based on its id
+#         box_color = bbox_colors[int(np_data[i, 0]) % len(bbox_colors)]
 
-        # Draw the bounding box
-        cv2.rectangle(image, (lx, ly), (rx, ry), box_color, 2)
+#         # Determine the label text
+#         if labels is not None:
+#             label = f"{labels[int(np_data[i, 6])]}: {np_data[i, 5]:.2f}"
+#         else:
+#             label = f"ID {int(np_data[i, 0])}: {np_data[i, 5]:.2f}"
 
-        # Get text size for background size
-        text_size, baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+#         # Draw the bounding box
+#         cv2.rectangle(image, (lx, ly), (rx, ry), box_color, 2)
 
-        # Draw a filled rectangle as background for text
-        cv2.rectangle(image, (lx, ly - text_size[1] - 5), (lx + text_size[0], ly), box_color, cv2.FILLED)
+#         # Get text size for background size
+#         text_size, baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
 
-        # Put the label text on the image
-        cv2.putText(image, label, (lx, ly - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+#         # Draw a filled rectangle as background for text
+#         cv2.rectangle(image, (lx, ly - text_size[1] - 5), (lx + text_size[0], ly), box_color, cv2.FILLED)
 
-    # Return the image with bounding boxes drawn
-    return image
+#         # Put the label text on the image
+#         cv2.putText(image, label, (lx, ly - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+
+#     # Return the image with bounding boxes drawn
+#     return image
