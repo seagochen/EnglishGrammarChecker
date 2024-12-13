@@ -119,38 +119,37 @@ class Drawer:
         return frame_copy
 
 
-    def draw_facial_vectors_2d(self, frame: np.ndarray, orientation_vectors: List[FacialOrientation2D],
-                               different_vectors: bool = False, show_legend: bool = False) -> np.ndarray:
-        """
-        在图像上绘制面部方向向量。
+    # def draw_facial_vectors_2d(self, frame: np.ndarray, orientation_vectors: List[FacialOrientation2D],
+    #                            different_vectors: bool = False, show_legend: bool = False) -> np.ndarray:
+    #     """
+    #     在图像上绘制面部方向向量。
 
-        :param frame: cv2 图像
-        :param orientation_vectors: FacialOrientation2D 对象列表
-        :param different_vectors: 是否使用不同颜色的向量
-        :param show_legend: 是否显示图例
-        :return: 绘制后的图像
-        """
-        frame_copy = frame.copy()
+    #     :param frame: cv2 图像
+    #     :param orientation_vectors: FacialOrientation2D 对象列表
+    #     :param different_vectors: 是否使用不同颜色的向量
+    #     :param show_legend: 是否显示图例
+    #     :return: 绘制后的图像
+    #     """
+    #     frame_copy = frame.copy()
 
-        for idx, vector in enumerate(orientation_vectors):
-            # 确定向量颜色
-            if different_vectors:
-                vector_color = self.bbox_colors[idx % len(self.bbox_colors)]
-            else:
-                vector_color = (255, 0, 0)  # 默认蓝色
+    #     for idx, vector in enumerate(orientation_vectors):
+    #         # 确定向量颜色
+    #         if different_vectors:
+    #             vector_color = self.bbox_colors[idx % len(self.bbox_colors)]
+    #         else:
+    #             vector_color = (255, 0, 0)  # 默认蓝色
 
-            # 绘制箭头
-            cv2.arrowedLine(frame_copy, (vector.origin_x, vector.origin_y), (vector.dest_x, vector.dest_y),
-                            vector_color, 2)
+    #         # 绘制箭头
+    #         cv2.arrowedLine(frame_copy, (vector.origin_x, vector.origin_y), (vector.dest_x, vector.dest_y),
+    #                         vector_color, 2)
 
-            # 绘制图例
-            if show_legend:
-                face_direction = str(vector)
-                cv2.putText(frame_copy, face_direction, (vector.origin_x + 5, vector.origin_y + 15),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, vector_color, 1)
+    #         # 绘制图例
+    #         if show_legend:
+    #             face_direction = str(vector)
+    #             cv2.putText(frame_copy, face_direction, (vector.origin_x + 5, vector.origin_y + 15),
+    #                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, vector_color, 1)
 
-        return frame_copy
-
+    #     return frame_copy
 
     def draw_objects(self, frame: np.ndarray, results: List[Union[Yolo, YoloSorted]], 
                      labels: List[Union[str, int]] = None,
@@ -192,5 +191,47 @@ class Drawer:
                 else:
                     self.draw_color_bbox(frame_copy, None, (255, 255, 255),
                                         (obj.lx, obj.ly, obj.rx, obj.ry), bbox_color)
+
+        return frame_copy
+
+
+    def draw_facial_vectors_2d(self, frame: np.ndarray, orientation_vectors: List[FacialOrientation2D],
+                            different_vectors: bool = False, show_legend: bool = False) -> np.ndarray:
+        """
+        在图像上绘制面部方向向量。
+
+        :param frame: cv2 图像
+        :param orientation_vectors: FacialOrientation2D 对象列表
+        :param different_vectors: 是否使用不同颜色的向量
+        :param show_legend: 是否显示图例
+        :return: 绘制后的图像
+        """
+        frame_copy = frame.copy()
+
+        for idx, vector in enumerate(orientation_vectors):
+            # 确定向量颜色
+            if different_vectors:
+                vector_color = self.bbox_colors[idx % len(self.bbox_colors)]
+            else:
+                vector_color = (255, 0, 0)  # 默认蓝色
+
+            # 判断是否正面
+            if vector.orientation == 0:
+                # 绘制一个中空圆和圆点
+                cv2.circle(frame_copy, (vector.origin_x, vector.origin_y), 10, vector_color, 2)  # 中空圆
+                cv2.circle(frame_copy, (vector.origin_x, vector.origin_y), 3, vector_color, -1)  # 实心圆点
+            elif vector.origin_x == vector.dest_x and vector.origin_y == vector.dest_y:
+                # 绘制一个点（非正面但起点和终点相同）
+                cv2.circle(frame_copy, (vector.origin_x, vector.origin_y), 3, vector_color, -1)
+            else:
+                # 绘制箭头
+                cv2.arrowedLine(frame_copy, (vector.origin_x, vector.origin_y), (vector.dest_x, vector.dest_y),
+                                vector_color, 2)
+
+            # 绘制图例
+            if show_legend:
+                face_direction = str(vector)
+                cv2.putText(frame_copy, face_direction, (vector.origin_x + 5, vector.origin_y + 15),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, vector_color, 1)
 
         return frame_copy
