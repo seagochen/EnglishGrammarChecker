@@ -1,13 +1,25 @@
 {
   "REMOTE_USER": "ubuntu",
-  "REMOTE_HOST": "192.168.1.45",
-  "REMOTE_DIR": "/home/ubuntu/Projects/SafeGuard",
-  "LOCAL_PROJECT_DIR": "/home/orlando/Projects/SafeGuard",
   "SSH_KEY_PATH": null,
+  "LOCAL_PROJECT_DIR": "/home/orlando/Projects/SafeGuard",
   "FILES_TO_SYNC": [
     "common/",
     "scripts/",
     "toolkits/",
     "README.md"
+  ],
+  "TARGETS": [
+    {
+      "REMOTE_HOST": "192.168.1.45",
+      "REMOTE_DIR": "/home/ubuntu/Projects/SafeGuard"
+    },
+    {
+      "REMOTE_HOST": "192.168.1.46",
+      "REMOTE_DIR": "/home/ubuntu/Projects/ServerLite"
+    },
+    {
+      "REMOTE_HOST": "192.168.1.47",
+      "REMOTE_DIR": "/home/ubuntu/Projects/AnotherProject"
+    }
   ]
 }

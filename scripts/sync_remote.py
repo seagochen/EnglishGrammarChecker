@@ -30,11 +30,10 @@ def load_config(config_file):
 config = load_config(CONFIG_FILE)
 
 REMOTE_USER = config.get("REMOTE_USER", "ubuntu")
-REMOTE_HOST = config.get("REMOTE_HOST", "localhost")
-REMOTE_DIR = config.get("REMOTE_DIR", "/tmp")
-LOCAL_PROJECT_DIR = config.get("LOCAL_PROJECT_DIR", ".")
 SSH_KEY_PATH = config.get("SSH_KEY_PATH", None)
+LOCAL_PROJECT_DIR = config.get("LOCAL_PROJECT_DIR", ".")
 FILES_TO_SYNC = config.get("FILES_TO_SYNC", [])
+TARGETS = config.get("TARGETS", [])
 
 # ==============================
 # 脚本逻辑部分
@@ -42,7 +41,7 @@ FILES_TO_SYNC = config.get("FILES_TO_SYNC", [])
 
 def get_password():
     """获取SSH密码"""
-    return getpass(f"请输入 {REMOTE_USER}@{REMOTE_HOST} 的SSH密码: ")
+    return getpass(f"请输入 {REMOTE_USER} 的SSH密码: ")
 
 def connect_ssh(username, hostname, password=None, key_filename=None):
     """建立SSH连接"""
@@ -121,26 +120,35 @@ def sftp_put_file(sftp, local_file, remote_file):
     except Exception as e:
         print(f"无法上传文件 {local_file}: {e}")
 
-def main():
+def sync_target(target):
+    """同步到单个目标"""
+    remote_host = target.get("REMOTE_HOST")
+    remote_dir = target.get("REMOTE_DIR")
+
+    if not remote_host or not remote_dir:
+        print("目标配置缺少 REMOTE_HOST 或 REMOTE_DIR，跳过此目标。")
+        return
+
+    print(f"开始同步到目标: {remote_host}:{remote_dir}")
+
     # 获取SSH密码
     password = None
     if not SSH_KEY_PATH:
         password = get_password()
 
     # 建立SSH连接
-    ssh_client = connect_ssh(REMOTE_USER, REMOTE_HOST, password=password, key_filename=SSH_KEY_PATH)
+    ssh_client = connect_ssh(REMOTE_USER, remote_host, password=password, key_filename=SSH_KEY_PATH)
     try:
         sftp = ssh_client.open_sftp()
     except Exception as e:
         print(f"无法打开SFTP连接: {e}")
         ssh_client.close()
-        sys.exit(1)
+        return
 
     # 删除并同步文件/文件夹
-    print(f"开始同步内容到远程设备...")
     for item in FILES_TO_SYNC:
         local_path = os.path.join(LOCAL_PROJECT_DIR, item.strip("/"))
-        remote_path = os.path.join(REMOTE_DIR, item.strip("/")).replace("\\", "/")
+        remote_path = os.path.join(remote_dir, item.strip("/")).replace("\\", "/")
 
         if item.endswith("/"):
             # 处理文件夹
@@ -161,7 +169,17 @@ def main():
     sftp.close()
     ssh_client.close()
 
-    print("同步完成！")
+    print(f"同步到目标 {remote_host}:{remote_dir} 完成！")
+
+def main():
+    if not TARGETS:
+        print("配置中未定义任何同步目标，退出。")
+        sys.exit(1)
+
+    for target in TARGETS:
+        sync_target(target)
+
+    print("所有同步任务完成！")
 
 if __name__ == "__main__":
     main()
