@@ -13,6 +13,7 @@ class SortTracker:
         self.iou_threshold = iou_threshold
         self.frame_count = 0  # 帧计数器
         self.tracker_manager = TrackerManager(max_age, max_objects)  # 用 TrackerManager 管理追踪器
+        
 
     def update(self, detections: np.ndarray) -> np.array:
         self.frame_count += 1
@@ -28,33 +29,26 @@ class SortTracker:
         #     [1, 1]   # 第 1 个检测结果匹配第 1 个追踪器
 
 
-        # 追踪器 ID 与检测结果索引的映射
-        detection_map = {}  
+        # 更新匹配上的追踪器
+        detection_map = self.tracker_manager.update_trackers(matched, detections) # 今度の修正
 
-        for m in matched: # 更新匹配上的追踪器
-            self.tracker_manager.trackers[m[1]].update(detections[m[0]][:4])  # 更新匹配上的追踪器
-            detection_map[self.tracker_manager.trackers[m[1]].id] = m[0]
-
-        for i in unmatched_dets: # 为未匹配的检测结果创建新的追踪器
-            tracker = self.tracker_manager.add_tracker(detections[i][:4])  # 添加新的追踪器
-            detection_map[tracker.id] = i
-
-        # 未更新的追踪器不需要处理，因为超过一定帧数未更新的追踪器会被TrackerManager删除
-        # for id in unmatched_trks:
-        #     self.tracker_manager.trackers[id]._release_id(self.tracker_manager.trackers[id].id)
+        # 添加未匹配的追踪器
+        unmatched_detection_map = self.tracker_manager.add_trackers(unmatched_dets, detections)
+        detection_map.update(unmatched_detection_map)        
 
         # 更新追踪器状态
-        self.tracker_manager.update_trackers() 
+        self.tracker_manager.commit_changes()
 
         # 构造返回的结果
         ret = []
         for tracker in self.tracker_manager.trackers:
             bbox = tracker.get_state()
             detection_idx = detection_map.get(tracker.id)
-            if detection_idx is not None and detection_idx < len(detections):
+            if detection_idx is not None and isinstance(detection_idx.item(), int):
                 kpts_combined = detections[detection_idx][4:]  # 获取检测的关键点信息
                 ret.append([tracker.id] + bbox + kpts_combined.tolist())
-        return np.array(ret)
+        return np.array(ret)        
+
 
     def _associate_detections_to_trackers(self, detections, trackers):
         if len(trackers) == 0:
@@ -95,6 +89,7 @@ class SortTracker:
             matches = np.concatenate(matches, axis=0)
 
         return matches, np.array(unmatched_detections), np.array(unmatched_trackers)
+
 
     @staticmethod
     def _iou(bb_test, bb_gt):
